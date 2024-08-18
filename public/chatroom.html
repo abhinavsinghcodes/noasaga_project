@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoaSaga - Chatroom</title>
+    <link rel="stylesheet" href="css/chatroom.css">
+    <!-- Socket.IO script -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <!-- Include your chatroom.js file -->
+    <script type="module" src="js/chatroom.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+</head>
+<body>
+    <div class="main">
+        <header>
+            <img src="images/img (1).jpeg" alt="Header Image 1">
+            <h1 id="header-text1">CHATROOM</h1>
+            <img src="images/img (5).jpeg" alt="Header Image 2">
+        </header>
+        <nav>
+            <button id="nav-button-1" onclick="window.location.href='index.html'">Home</button>
+            <button id="nav-button-2" onclick="window.location.href='anime-list.html'">Anime List</button>
+            <button id="nav-button-3" onclick="window.location.href='chatroom.html'">Chat Room</button>
+            <button id="nav-button-4" onclick="window.location.href='socials.html'">Socials</button>
+            <button id="nav-button-5" onclick="window.location.href='posts.html'">Posts</button>
+            <button id="nav-button-6" onclick="window.location.href='support.html'">Support</button>
+        </nav>        
+        <main>
+            <div class="chats">
+                <!-- COMMENTS HERE -->
+            </div>
+            <div class="bar">
+                <textarea id="comment-area" placeholder="TYPE 'HELLO FRIENDS' AND SEND!!"></textarea>
+                <button id="send-button">SEND</button>
+                <button id="clear-name-button">Clear Name</button>
+            </div>
+        </main>
+        <footer>
+            <div class="footer-class1">
+                <h2>POSTS</h2>
+                <div class="posts-div">
+                    
+                </div>
+            </div>
+            <div class="footer-class2">
+                <h2>INSTAGRAM POSTS</h2>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

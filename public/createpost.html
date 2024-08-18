@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Post</title>
+    <link rel="stylesheet" href="css/posts.css">
+</head>
+<body>
+    <div class="main" id="main">
+        <header>
+            <img src="images/img (3).jpeg" id="header-image1" alt="Header Image 1">
+            <h1 id="header-text1">WELCOME TO NOASAGA PROJECT</h1>
+            <img src="images/img (4).jpeg" id="header-image2" alt="Header Image 2">
+        </header>
+        <nav>
+            <button onclick="window.location.href='index.html'">Home</button>
+            <button onclick="window.location.href='anime-list.html'">Anime List</button>
+            <button onclick="window.location.href='chatroom.html'">Chat Room</button>
+            <button onclick="window.location.href='socials.html'">Socials</button>
+            <button onclick="window.location.href='posts.html'">Posts</button>
+            <button onclick="window.location.href='support.html'">Support</button>
+        </nav>
+        <main>
+            <h3>Create a Post</h3>
+            <form id="postForm">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required><br><br>
+
+                <label for="title">Title:</label>
+                <input type="text" id="title" name="title" required><br><br>
+
+                <label for="content">Content:</label>
+                <textarea id="content" name="content" required></textarea><br><br>
+
+                <button type="submit">Submit Post</button>
+            </form>
+        </main>
+    </div>
+
+    <script src="js/createpost.js"></script>
+</body>
+</html>
