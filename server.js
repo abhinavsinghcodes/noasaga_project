@@ -8,7 +8,7 @@ const socketIo = require('socket.io');
 const cors = require('cors'); // Import cors
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000; // Use PORT from environment variables or default to 3000
 const server = http.createServer(app);
 const io = socketIo(server);
 
@@ -150,21 +150,6 @@ io.on('connection', (socket) => {
         savePosts([]);
         io.emit('updatePosts', []); // Notify all clients about the post removal
     });
-
-// Serve static files from the "public" directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Endpoint to serve comments data
-app.get('/api/comments', (req, res) => {
-    fs.readFile(path.join(__dirname, 'comments.json'), 'utf8', (err, data) => {
-        if (err) {
-            res.status(500).send('Error reading comments file');
-            return;
-        }
-        res.json(JSON.parse(data));
-    });
-});
-
 
     // Handle disconnection
     socket.on('disconnect', () => {
