@@ -5,55 +5,85 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const http = require('http');
 const socketIo = require('socket.io');
-const cors = require('cors'); // Import cors
+const cors = require('cors');
 
 const app = express();
-const port = process.env.PORT || 3000; // Use PORT from environment variables or default to 3000
+const port = process.env.PORT || 3000;
 const server = http.createServer(app);
 const io = socketIo(server);
 
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cors()); // Enable CORS for all routes
+app.use(cors());
 
-// File paths
 const commentsFilePath = path.join(__dirname, 'comments.json');
 const postsFilePath = path.join(__dirname, 'posts.json');
+const topAnimeFilePath = path.join(__dirname, 'topAnime.json');
 
-// Load existing comments
 function loadComments() {
     try {
         const data = fs.readFileSync(commentsFilePath);
         return JSON.parse(data);
     } catch (error) {
+        console.error('Error loading comments:', error);
         return [];
     }
 }
 
-// Save comments
 function saveComments(comments) {
-    fs.writeFileSync(commentsFilePath, JSON.stringify(comments, null, 2));
+    try {
+        fs.writeFileSync(commentsFilePath, JSON.stringify(comments, null, 2));
+    } catch (error) {
+        console.error('Error saving comments:', error);
+    }
 }
 
-// Load existing posts
+function saveTopAnime(topAnime) {
+    try {
+        fs.writeFileSync(topAnimeFilePath, JSON.stringify(topAnime, null, 2));
+    } catch (error) {
+        console.error('Error saving top anime:', error);
+    }
+}
+
 function loadPosts() {
     try {
         const data = fs.readFileSync(postsFilePath);
         return JSON.parse(data);
     } catch (error) {
+        console.error('Error loading posts:', error);
         return [];
     }
 }
 
-// Save posts
 function savePosts(posts) {
-    fs.writeFileSync(postsFilePath, JSON.stringify(posts, null, 2));
+    try {
+        fs.writeFileSync(postsFilePath, JSON.stringify(posts, null, 2));
+    } catch (error) {
+        console.error('Error saving posts:', error);
+    }
 }
 
-// API endpoints for comments
+async function fetchAndSaveTopAnime() {
+    try {
+        const { default: fetch } = await import('node-fetch');
+        const response = await fetch('https://api.jikan.moe/v4/top/anime');
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        console.log('Fetched data:', data); // Check if data is fetched correctly
+        const top5Anime = data.data.slice(0, 5).map(anime => ({
+            id: anime.mal_id,
+            title: anime.title
+        }));
+        saveTopAnime(top5Anime);
+        console.log('Top 5 anime saved to topAnime.json');
+    } catch (error) {
+        console.error('Error fetching top anime:', error);
+    }
+}
+
 app.get('/api/comments', (req, res) => {
-    const comments = loadComments();
-    res.json(comments);
+    res.json(loadComments());
 });
 
 app.post('/api/comments', (req, res) => {
@@ -65,14 +95,12 @@ app.post('/api/comments', (req, res) => {
     const newComment = { id: uuidv4(), name, time, text };
     comments.push(newComment);
     saveComments(comments);
-    io.emit('updateComments', comments); // Notify all clients about the new comment
+    io.emit('updateComments', comments);
     res.json(newComment);
 });
 
-// API endpoints for posts
 app.get('/api/posts', (req, res) => {
-    const posts = loadPosts();
-    res.json(posts);
+    res.json(loadPosts());
 });
 
 app.post('/api/posts', (req, res) => {
@@ -84,7 +112,7 @@ app.post('/api/posts', (req, res) => {
     const newPost = { id: uuidv4(), name, date, title, content, replies: [] };
     posts.push(newPost);
     savePosts(posts);
-    io.emit('updatePosts', posts); // Notify all clients about the new post
+    io.emit('updatePosts', posts);
     res.json(newPost);
 });
 
@@ -101,63 +129,64 @@ app.post('/api/replies', (req, res) => {
     const newReply = { id: uuidv4(), name, content };
     post.replies.push(newReply);
     savePosts(posts);
-    io.emit('updatePosts', posts); // Notify all clients about the new reply
+    io.emit('updatePosts', posts);
     res.json(newReply);
 });
 
-// Handle Socket.IO connections
+app.get('/api/top-anime', (req, res) => {
+    try {
+        const data = fs.readFileSync(topAnimeFilePath);
+        const topAnime = JSON.parse(data);
+        console.log('Top anime data:', topAnime); // Log the data being served
+        res.json(topAnime);
+    } catch (error) {
+        console.error('Error reading top anime file:', error);
+        res.status(500).json({ error: 'Failed to read top anime file' });
+    }
+});
+
 io.on('connection', (socket) => {
     console.log('A user connected');
-
-    // Send existing comments and posts to the newly connected client
     socket.emit('updateComments', loadComments());
     socket.emit('updatePosts', loadPosts());
 
-    // Handle refresh comments
     socket.on('refreshComments', () => {
         socket.emit('updateComments', loadComments());
     });
 
-    // Handle refresh posts
     socket.on('refreshPosts', () => {
         socket.emit('updatePosts', loadPosts());
     });
 
-    // Handle remove individual comment
     socket.on('removeComment', (id) => {
         let comments = loadComments();
         comments = comments.filter(comment => comment.id !== id);
         saveComments(comments);
-        io.emit('updateComments', comments); // Notify all clients about the comment removal
+        io.emit('updateComments', comments);
     });
 
-    // Handle remove all comments
     socket.on('removeAllComments', () => {
         saveComments([]);
-        io.emit('updateComments', []); // Notify all clients about the comment removal
+        io.emit('updateComments', []);
     });
 
-    // Handle remove individual post
     socket.on('removePost', (id) => {
         let posts = loadPosts();
         posts = posts.filter(post => post.id !== id);
         savePosts(posts);
-        io.emit('updatePosts', posts); // Notify all clients about the post removal
+        io.emit('updatePosts', posts);
     });
 
-    // Handle remove all posts
     socket.on('removeAllPosts', () => {
         savePosts([]);
-        io.emit('updatePosts', []); // Notify all clients about the post removal
+        io.emit('updatePosts', []);
     });
 
-    // Handle disconnection
     socket.on('disconnect', () => {
         console.log('A user disconnected');
     });
 });
 
-// Start the server
 server.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
