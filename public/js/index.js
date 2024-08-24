@@ -1,13 +1,36 @@
 const socket = io(); // Initialize Socket.IO
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const preloader = document.getElementById('preloader');
+    
+    try {
+        // Fetch API data or any async task
+        const response = await fetch('/api/top-anime');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const comments = await response.json();
+    } finally {
+        // Hide preloader once content is loaded
+        preloader.style.display = 'none';
+    }
+});
+
+
+document.addEventListener('DOMContentLoaded', async () => {
     // Fetch and display comments
     try {
         const response = await fetch('/api/comments'); // Corrected endpoint
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
-        const comments = await response.json();
+        let comments = await response.json();
+
+        // Keep only the last 50 comments
+        if (comments.length > 50) {
+            comments = comments.slice(-50); // Get the last 50 comments
+        }
+
         const part2 = document.getElementById('comment-box');
         part2.innerHTML = comments.map(comment => `
             <div class="comment">
@@ -19,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Error fetching comments:', error);
     }
 });
+
 
 // Function to fetch top 5 anime from the server
 async function fetchTopAnime() {
