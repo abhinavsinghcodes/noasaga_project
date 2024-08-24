@@ -6,6 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
+const axios = require('axios');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -133,15 +134,28 @@ app.post('/api/replies', (req, res) => {
     res.json(newReply);
 });
 
-app.get('/api/top-anime', (req, res) => {
+// Endpoint to get top 5 anime
+app.get('/api/top-anime', async (req, res) => {
     try {
-        const data = fs.readFileSync(topAnimeFilePath);
-        const topAnime = JSON.parse(data);
-        console.log('Top anime data:', topAnime); // Log the data being served
+        const response = await axios.get('https://api.jikan.moe/v4/top/anime');
+        const topAnime = response.data.data.slice(0, 5); // Get top 5 anime
         res.json(topAnime);
     } catch (error) {
-        console.error('Error reading top anime file:', error);
-        res.status(500).json({ error: 'Failed to read top anime file' });
+        console.error('Error fetching top anime:', error);
+        res.status(500).send('Error fetching top anime');
+    }
+});
+
+// Example using Express.js
+app.get('/api/anime/:animeId', async (req, res) => {
+    const { animeId } = req.params;
+    try {
+        const response = await axios.get(`https://api.jikan.moe/v4/anime/${animeId}`);
+        const animeDetails = response.data.data;
+        res.json(animeDetails);
+    } catch (error) {
+        console.error('Error fetching anime details:', error);
+        res.status(500).send('Error fetching anime details');
     }
 });
 
