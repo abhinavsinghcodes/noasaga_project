@@ -145,7 +145,11 @@ footer {
     flex-direction: column;
     align-items: start;
     justify-content: center;
-    overflow: hidden;
+    overflow: scroll;
+}
+
+#part2::-webkit-scrollbar {
+    display: none;
 }
 
 h2 {
@@ -207,4 +211,10 @@ a:link{
 
 #nav-button-1 {
     background-color: white;
+}
+
+#lists1 li:hover {
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: bold;
 }
