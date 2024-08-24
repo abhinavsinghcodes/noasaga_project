@@ -175,6 +175,20 @@ li {
     font-size: 12px;
 }
 
+#lists1 {
+    line-height: 1.2rem;
+    overflow: scroll;
+    padding-left: 0.625rem;
+}
+
+#lists1::-webkit-scrollbar {
+    display: none;
+}
+
+ul {
+    list-style-type: decimal-leading-zero; 
+}
+
 .comment {
     height: fit-content;
     width: auto;
@@ -217,4 +231,10 @@ a:link{
     text-decoration: underline;
     cursor: pointer;
     font-weight: bold;
+}
+
+#insta-ids:hover {
+    text-decoration: underline;
+    font-weight: bold;
+    cursor: pointer;
 }

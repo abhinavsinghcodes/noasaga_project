@@ -138,7 +138,7 @@ app.post('/api/replies', (req, res) => {
 app.get('/api/top-anime', async (req, res) => {
     try {
         const response = await axios.get('https://api.jikan.moe/v4/top/anime');
-        const topAnime = response.data.data.slice(0, 5); // Get top 5 anime
+        const topAnime = response.data.data.slice(0, 20); // Get top 5 anime
         res.json(topAnime);
     } catch (error) {
         console.error('Error fetching top anime:', error);
