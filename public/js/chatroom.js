@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const commentArea = document.getElementById('comment-area');
     const sendButton = document.getElementById('send-button');
     const clearNameButton = document.getElementById('clear-name-button');
+    const postsDiv = document.querySelector('.posts-div'); // Ensure to use the correct class selector
 
     const socket = io();
 
@@ -93,4 +94,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.emit('refreshComments');
     loadComments();
+
+    // Fetch and display posts
+    async function loadPosts() {
+        try {
+            const response = await fetch('/api/posts');
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            const posts = await response.json();
+            postsDiv.innerHTML = '';
+            posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.classList.add('post');
+
+                // Format date
+                const date = new Date(post.date);
+                const formattedDate = date.toLocaleDateString();
+
+                postElement.innerHTML = `
+                    <h5>${post.name} <span>[${formattedDate}]</span></h5>
+                    <h6>${post.title}</h6>
+                    <p>${post.content}</p>
+                    <h5>Replies:</h5>
+                    <div class="reply-box">
+                        <div id="replies-${post.id}">
+                            ${post.replies.map(reply => `
+                                <div class="reply">
+                                    <h6>${reply.name}</h6>
+                                    <p>${reply.content}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <hr>
+                `;
+
+                postsDiv.appendChild(postElement);
+            });
+        } catch (error) {
+            console.error('Error loading posts:', error);
+        }
+    }
+
+    loadPosts();
 });

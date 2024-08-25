@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 allPosts = posts; // Store fetched posts
                 displayPosts(posts); // Display all posts initially
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => console.error('Error fetching posts:', error));
     }
 
     // Function to display posts
@@ -36,13 +36,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h6>${post.title}</h6>
                 <p>${post.content}</p>
                 <h5>Replies:</h5>
-                <div class="reply-box">
-                    <div id="replies-${post.id}"></div>
+                <div class="reply-box" id="replies-${post.id}">
+                    ${post.replies.map(reply => `
+                        <div class="reply">
+                            <strong>${reply.name}</strong>: ${reply.content}
+                        </div>
+                    `).join('')}
                 </div>
                 <form class="replyform1" id="replyForm-${post.id}">
                     <input type="text" name="replyName" placeholder="Your Name" required>
                     <textarea name="replyContent" placeholder="Your Reply" required></textarea>
-                    <button id="button-reply" type="submit">Reply</button>
+                    <button id="button-reply-${post.id}" type="submit">Reply</button>
                 </form>
                 <hr>
             `;
@@ -75,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     repliesDiv.appendChild(replyElement);
                     replyForm.reset(); // Reset form after submission
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => console.error('Error posting reply:', error));
             });
 
             // Fetch and display replies
@@ -83,11 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Fetch replies for a specific post
     function fetchReplies(postId) {
         fetch(`/api/replies?postId=${postId}`)
             .then(response => response.json())
             .then(replies => {
+                console.log('Fetched replies:', replies); // Debugging line
                 const repliesDiv = document.getElementById(`replies-${postId}`);
                 repliesDiv.innerHTML = ''; // Clear existing replies
                 replies.forEach(reply => {
@@ -99,9 +103,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     repliesDiv.appendChild(replyElement);
                 });
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error fetching replies:', error);
+            });
     }
-
+    
     // Filter and display posts based on search query
     searchBar.addEventListener('input', () => {
         const query = searchBar.value.toLowerCase();

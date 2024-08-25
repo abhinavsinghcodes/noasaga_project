@@ -47,23 +47,21 @@ function saveTopAnime(topAnime) {
     }
 }
 
+// Load posts from a file or database
 function loadPosts() {
-    try {
-        const data = fs.readFileSync(postsFilePath);
-        return JSON.parse(data);
-    } catch (error) {
-        console.error('Error loading posts:', error);
-        return [];
+    const filePath = path.join(__dirname, 'posts.json');
+    if (fs.existsSync(filePath)) {
+        return JSON.parse(fs.readFileSync(filePath, 'utf8'));
     }
+    return [];
 }
 
+// Save posts to a file or database
 function savePosts(posts) {
-    try {
-        fs.writeFileSync(postsFilePath, JSON.stringify(posts, null, 2));
-    } catch (error) {
-        console.error('Error saving posts:', error);
-    }
+    const filePath = path.join(__dirname, 'posts.json');
+    fs.writeFileSync(filePath, JSON.stringify(posts, null, 2), 'utf8');
 }
+
 
 async function fetchAndSaveTopAnime() {
     try {
@@ -100,10 +98,12 @@ app.post('/api/comments', (req, res) => {
     res.json(newComment);
 });
 
+// Get all posts
 app.get('/api/posts', (req, res) => {
     res.json(loadPosts());
 });
 
+// Create a new post
 app.post('/api/posts', (req, res) => {
     const { name, date, title, content } = req.body;
     if (!name || !date || !title || !content) {
@@ -117,6 +117,7 @@ app.post('/api/posts', (req, res) => {
     res.json(newPost);
 });
 
+// Add a reply to a post
 app.post('/api/replies', (req, res) => {
     const { postId, name, content } = req.body;
     if (!postId || !name || !content) {

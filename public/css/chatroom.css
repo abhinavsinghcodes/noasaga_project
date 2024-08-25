@@ -28,7 +28,7 @@ h2 {
     font-size: 16px;
     color: white;
     background-color: #FF92AE;
-    width: 85%;
+    width: 95%;
     border-radius: 10px;
     font-weight: lighter;
     margin: 5px;
@@ -257,4 +257,65 @@ footer {
     align-items: center;
     flex-direction: column;
     gap: 3px;
+}
+
+.posts-div {
+    overflow: scroll;
+    height: auto;
+    width: 100%;
+    margin-left: 0.625rem;
+}
+
+.posts-div::-webkit-scrollbar {
+    display: none;
+
+}
+
+.post {
+    border-left: 2px solid black;
+    padding: 8px 5px 8px 5px;
+    margin-left: 5px;
+    word-break: break-all;
+    word-wrap: break-word;
+}
+
+.post h5 {
+    font-size: 1.2rem;
+}
+
+.post h6 {
+    font-size: 1.2rem;
+}
+
+.post h7 {
+    font-size: 1rem;
+    font-weight: lighter;
+}
+
+.post p {
+    margin-left: 5px;
+    border-left: 1px solid black;
+    padding-left: 3px;
+}
+
+.post hr {
+    margin: 2px 10px 2px 10px;
+    border: 1px solid black;
+}
+
+.reply {
+    margin-left: 5px;
+    border-left: 1px solid black;
+    padding-left: 3px;
+    max-height: 50px;
+}
+
+.reply-box {
+    max-height: 4rem;
+    overflow: scroll;
+    scroll-behavior: smooth;
+}
+
+.reply-box::-webkit-scrollbar {
+    display: none;
 }
