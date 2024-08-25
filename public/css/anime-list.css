@@ -113,6 +113,7 @@ main {
     padding: 0.625rem;
     width: 100%;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 #anime {
@@ -140,9 +141,9 @@ main {
     width: 100%;
     box-sizing: border-box;
     display: flex;
-    flex-direction: row;
-    justify-content: space-evenly;
-    align-items: start;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
     padding: 0.25rem;
     gap: 0.3125rem;
     overflow: scroll;
@@ -152,51 +153,67 @@ main {
     display: none;
 }
 
-.number,
-.name,
-.info,
-.watch-here {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.list-header {
     width: 100%;
-    gap: 5px;
-    flex-direction: column;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    gap: 0.3125rem;
 }
 
-h7 {
-    border: 2px solid black;
+.list-header span,
+.item span {
+    border: 1px solid black;
     width: 100%;
     text-align: center;
 }
 
-.information-of-anime,
-.click-to-watch {
-    background-color: white;
-    padding: 0 0.625rem;
-    transition: 0.2s ease;
-    height: 100%;
-    font-size: 1rem;
+.list-start {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
+    align-items: center;
     width: 100%;
-    border: 1px solid black;
+    height: fit-content;
+    gap: 0.3125rem;
 }
 
-.information-of-anime:hover,
-.click-to-watch:hover {
+.item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+    gap: 0.3125rem;
+    width: 100%;
+}
+
+.item button {
+    width: 100%;
+    border: 1px solid black;
+    background: none;
+    font-weight: bold;
+    margin: none;
+    height: 100%;
+    transition: 0.3s ease-in-out;
+}
+
+.item button:hover {
     background-color: #FF92AE;
     color: white;
+    cursor: pointer;
 }
 
-.information-of-anime:active,
-.click-to-watch:active {
-    opacity: 0.5;
+.information:active,
+.watch-button:active {
+    opacity: 0.6;
 }
 
-.list span {
-    border: 1px solid black;
-    width: 100%;
-    text-align: center;
+.anime-name {
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.anime-name::-webkit-scrollbar {
+    display: none;
 }

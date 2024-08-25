@@ -2,9 +2,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
     const animeId = params.get('animeId');
 
+    console.log('URL parameters:', window.location.search); // Log entire query string
+    console.log('Extracted animeId:', animeId); // Log extracted animeId
+
     if (animeId) {
         try {
-            const response = await fetch(`/api/anime/${animeId}`); // Fixed URL string
+            const response = await fetch(`/api/anime/${animeId}`);
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
@@ -19,7 +22,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function displayAnimeDetails(anime) {
-    console.log('Anime details:', anime); // Log the entire anime object
     const detailsDiv = document.getElementById('anime-details');
     const infoHTML = `
     <div class="anime-info">
@@ -52,5 +54,5 @@ function displayAnimeDetails(anime) {
     </div>
     `;
 
-    detailsDiv.innerHTML = infoHTML + additionalInfoHTML; // Fixed variable name
+    detailsDiv.innerHTML = infoHTML + additionalInfoHTML;
 }

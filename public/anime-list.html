@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Anime List - NoaSaga</title>
     <link rel="stylesheet" href="css/anime-list.css">
+    <link rel="stylesheet" href="css/protect.css">
 </head>
 <body>
+    <div class="overlay"></div>
     <div class="main" id="main">
         <!-- HEADER -->
         <header>
             <img src="images/img (3).jpeg" id="header-image1">
-            <h1 id="header-text1">WELCOME TO NOASAGA PROJECT</h1>
+            <h1 id="header-text1">ANIME LIST</h1>
             <img src="images/img (4).jpeg" id="header-image2">
         </header>
         <!-- NAVIGATION BAR -->
@@ -24,79 +26,26 @@
         </nav>
         <main>
             <label id="anime">Search Anime: 
-                <input type="text" placeholder="Naruto">
+                <input type="text" id="search-input" maxlength="4" placeholder="Enter Code!">
             </label>
             <div class="list">
-                <div class="number">
-                    <h7>Code</h7>
-                    <span>[code]</span>
-                    <span>[code]</span>
-                    <span>[code]</span>
-                    <span>[code]</span>
-                    <span>[code]</span>
-                    <span>[code]</span>
-                    <span>[code]</span>
+                <div class="list-header">
+                    <span id="codes">Codes</span>
+                    <span id="anime-n">Anime Name</span>
+                    <span id="anime-inf">Information</span>
+                    <span id="anime-watch">Watch link</span>
                 </div>
-                <div class="name">
-                    <h7>Anime name</h7>
-                    <span>[code]</span>
-                    <span>[code]</span>
-                    <span>[code]</span>
-                    <span>[code]</span>
-                    <span>[code]</span>
-                    <span>[code]</span>
-                    <span>[code]</span>
-                </div>
-                <div class="info">
-                    <h7>Information</h7>
-                    <button class="information-of-anime">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
-                    <button class="information-of-anime">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
-                    <button class="information-of-anime">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
-                    <button class="information-of-anime">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
-                    <button class="information-of-anime">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
-                    <button class="information-of-anime">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
-                    <button class="information-of-anime">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
-                </div>
-                <div class="watch-here">
-                    <h7>Watch Link</h7>
-                    <button class="click-to-watch">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
-                    <button class="click-to-watch">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
-                    <button class="click-to-watch">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
-                    <button class="click-to-watch">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
-                    <button class="click-to-watch">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
-                    <button class="click-to-watch">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
-                    <button class="click-to-watch">
-                        <a href="#">CLICK HERE!!!</a>
-                    </button>
+                <div class="list-start">
+                    <div class="item" id="item1">
+                        <span class="anime-code">0001</span>
+                        <span class="anime-name">Naruto</span>
+                        <button class="information" id="anime-button" data-anime-id="20">info</button>
+                        <button class="watch-button">watch</button>
+                    </div>                 
                 </div>
             </div>
         </main>
     </div>
+    <script src="js/anime-list.js"></script>
 </body>
 </html>
