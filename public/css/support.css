@@ -1,0 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Jua&family=Patrick+Hand&display=swap');
+
+* {
+    padding: 0;
+    margin: 0;
+    outline: none;
+    font-family: "Patrick Hand", Roboto, sans-serif;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #FFD8E2;
+}
+
+#nav-button-5 {
+    background-color: white;
+}
+
+
+.main {
+    width: 638px;
+    height: 755px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    display: flex;
+    gap: 3px;
+    justify-content: start;
+    align-items: start;
+    flex-direction: column;
+}
+
+header {
+    background-color: white;
+    height: 60px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+header img {
+    height: 55px;
+    width: 55px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+#header-text1 {
+    font-size: 40px;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+nav {
+    background-color: #FF92AE;
+    height: 24px;
+    width: 100%;
+    border-top: 2px solid #FF678F;
+    border-bottom: 2px solid #FF678F;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+    gap: 8px;
+    padding: 0 5px;
+    box-sizing: border-box;
+}
+
+nav button {
+    height: 16px;
+    width: 100%;
+    background-color: transparent;
+    border: 1px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: ease 0.2s;
+    font-weight: 400;
+}
+
+nav button:hover {
+    background-color: white;
+    transform: scale(1.1);
+    margin: 5px;
+}
+
+nav button:active {
+    background-color: white;
+    opacity: 0.5;
+}
+
+main {
+    background-color: white;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0.3125rem;
+    box-sizing: border-box;
+}
+
+hr {
+    border-radius: 30%;
+    background-color: black;
+    margin: 10px 0;
+}
+
+article {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+article p {
+    text-align: center;
+}
+
+a:link {
+    text-decoration: underline;
+    color: inherit;
+}
+
+a:visited {
+    text-decoration: underline;
+    color: inherit;
+}
+
+ul {
+    box-sizing: border-box;
+    margin-left: 5%;
+}
+

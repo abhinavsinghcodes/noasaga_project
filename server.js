@@ -7,6 +7,9 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const axios = require('axios');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { check, validationResult } = require('express-validator');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -16,11 +19,23 @@ const io = socketIo(server);
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
+app.use(helmet());
 
+// Rate limiting
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.',
+});
+app.use('/api/', apiLimiter);
+
+// File paths
 const commentsFilePath = path.join(__dirname, 'comments.json');
 const postsFilePath = path.join(__dirname, 'posts.json');
 const topAnimeFilePath = path.join(__dirname, 'topAnime.json');
+const badWordsFilePath = path.join(__dirname, 'bad-words.txt');
 
+// Load and save functions
 function loadComments() {
     try {
         const data = fs.readFileSync(commentsFilePath);
@@ -39,6 +54,24 @@ function saveComments(comments) {
     }
 }
 
+function loadPosts() {
+    try {
+        const data = fs.readFileSync(postsFilePath);
+        return JSON.parse(data);
+    } catch (error) {
+        console.error('Error loading posts:', error);
+        return [];
+    }
+}
+
+function savePosts(posts) {
+    try {
+        fs.writeFileSync(postsFilePath, JSON.stringify(posts, null, 2));
+    } catch (error) {
+        console.error('Error saving posts:', error);
+    }
+}
+
 function saveTopAnime(topAnime) {
     try {
         fs.writeFileSync(topAnimeFilePath, JSON.stringify(topAnime, null, 2));
@@ -47,49 +80,29 @@ function saveTopAnime(topAnime) {
     }
 }
 
-// Load posts from a file or database
-function loadPosts() {
-    const filePath = path.join(__dirname, 'posts.json');
-    if (fs.existsSync(filePath)) {
-        return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    }
-    return [];
+// Function to read bad words from the file
+function loadBadWords() {
+    return fs.readFileSync(badWordsFilePath, 'utf-8')
+        .split('\n')
+        .map(word => word.trim())
+        .filter(word => word.length > 0);
 }
 
-// Save posts to a file or database
-function savePosts(posts) {
-    const filePath = path.join(__dirname, 'posts.json');
-    fs.writeFileSync(filePath, JSON.stringify(posts, null, 2), 'utf8');
-}
-
-
-async function fetchAndSaveTopAnime() {
-    try {
-        const { default: fetch } = await import('node-fetch');
-        const response = await fetch('https://api.jikan.moe/v4/top/anime');
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-        console.log('Fetched data:', data); // Check if data is fetched correctly
-        const top5Anime = data.data.slice(0, 5).map(anime => ({
-            id: anime.mal_id,
-            title: anime.title
-        }));
-        saveTopAnime(top5Anime);
-        console.log('Top 5 anime saved to topAnime.json');
-    } catch (error) {
-        console.error('Error fetching top anime:', error);
-    }
-}
-
+// API routes
 app.get('/api/comments', (req, res) => {
     res.json(loadComments());
 });
 
-app.post('/api/comments', (req, res) => {
-    const { name, time, text } = req.body;
-    if (!name || !time || !text) {
-        return res.status(400).json({ error: 'Invalid comment data' });
+app.post('/api/comments', [
+    check('name').notEmpty().withMessage('Name is required'),
+    check('time').notEmpty().withMessage('Time is required'),
+    check('text').notEmpty().withMessage('Text is required')
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
+    const { name, time, text } = req.body;
     const comments = loadComments();
     const newComment = { id: uuidv4(), name, time, text };
     comments.push(newComment);
@@ -98,17 +111,21 @@ app.post('/api/comments', (req, res) => {
     res.json(newComment);
 });
 
-// Get all posts
 app.get('/api/posts', (req, res) => {
     res.json(loadPosts());
 });
 
-// Create a new post
-app.post('/api/posts', (req, res) => {
-    const { name, date, title, content } = req.body;
-    if (!name || !date || !title || !content) {
-        return res.status(400).json({ error: 'Invalid post data' });
+app.post('/api/posts', [
+    check('name').notEmpty().withMessage('Name is required'),
+    check('date').notEmpty().withMessage('Date is required'),
+    check('title').notEmpty().withMessage('Title is required'),
+    check('content').notEmpty().withMessage('Content is required')
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
+    const { name, date, title, content } = req.body;
     const posts = loadPosts();
     const newPost = { id: uuidv4(), name, date, title, content, replies: [] };
     posts.push(newPost);
@@ -117,12 +134,16 @@ app.post('/api/posts', (req, res) => {
     res.json(newPost);
 });
 
-// Add a reply to a post
-app.post('/api/replies', (req, res) => {
-    const { postId, name, content } = req.body;
-    if (!postId || !name || !content) {
-        return res.status(400).json({ error: 'Invalid reply data' });
+app.post('/api/replies', [
+    check('postId').notEmpty().withMessage('Post ID is required'),
+    check('name').notEmpty().withMessage('Name is required'),
+    check('content').notEmpty().withMessage('Content is required')
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
+    const { postId, name, content } = req.body;
     const posts = loadPosts();
     const post = posts.find(p => p.id === postId);
     if (!post) {
@@ -135,11 +156,10 @@ app.post('/api/replies', (req, res) => {
     res.json(newReply);
 });
 
-// Endpoint to get top 5 anime
 app.get('/api/top-anime', async (req, res) => {
     try {
         const response = await axios.get('https://api.jikan.moe/v4/top/anime');
-        const topAnime = response.data.data.slice(0, 20); // Get top 5 anime
+        const topAnime = response.data.data.slice(0, 20);
         res.json(topAnime);
     } catch (error) {
         console.error('Error fetching top anime:', error);
@@ -147,7 +167,6 @@ app.get('/api/top-anime', async (req, res) => {
     }
 });
 
-// Example using Express.js
 app.get('/api/anime/:animeId', async (req, res) => {
     const { animeId } = req.params;
     try {
@@ -160,6 +179,13 @@ app.get('/api/anime/:animeId', async (req, res) => {
     }
 });
 
+// Serve the bad words list to the frontend
+app.get('/api/badwords', (req, res) => {
+    const badWords = loadBadWords();
+    res.json(badWords);
+});
+
+// Socket.IO
 io.on('connection', (socket) => {
     console.log('A user connected');
     socket.emit('updateComments', loadComments());

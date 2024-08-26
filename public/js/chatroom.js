@@ -1,22 +1,53 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const commentsDiv = document.querySelector('.chats');
     const commentArea = document.getElementById('comment-area');
     const sendButton = document.getElementById('send-button');
     const clearNameButton = document.getElementById('clear-name-button');
-    const postsDiv = document.querySelector('.posts-div'); // Ensure to use the correct class selector
+    const postsDiv = document.querySelector('.posts-div');
 
     const socket = io();
 
-    let userName = localStorage.getItem('userName');
+    let badWords = [];
 
-    if (!userName) {
-        userName = prompt('Enter your name:');
-        if (userName) {
-            localStorage.setItem('userName', userName);
-        } else {
-            alert('Name is required to participate in the chat.');
-            return;
+    // Load bad words from the server
+    async function fetchBadWords() {
+        try {
+            const response = await fetch('/api/badwords');
+            if (response.ok) {
+                badWords = await response.json();
+            } else {
+                console.error('Failed to load bad words:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error fetching bad words:', error);
         }
+    }
+
+    function containsBadWord(text) {
+        return badWords.some(badWord => text.toLowerCase().includes(badWord));
+    }
+
+    function promptUserName() {
+        let userName = prompt('Enter your name:');
+        while (!userName || userName.length > 12 || containsBadWord(userName) || /[^a-zA-Z0-9]/.test(userName)) {
+            if (!userName) {
+                alert('Name is required to participate in the chat.');
+            } else if (userName.length > 12) {
+                alert('Name must be 12 characters or less.');
+            } else if (containsBadWord(userName)) {
+                alert('Name contains inappropriate language.');
+            } else if (/[^a-zA-Z0-9]/.test(userName)) {
+                alert('Name can only contain letters and numbers.');
+            }
+            userName = prompt('Enter your name:');
+        }
+        localStorage.setItem('userName', userName);
+        return userName;
+    }
+
+    let userName = localStorage.getItem('userName');
+    if (!userName) {
+        userName = promptUserName();
     }
 
     function smoothScrollToBottom() {
@@ -60,6 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton.addEventListener('click', async () => {
         const comment = commentArea.value.trim();
         if (comment) {
+            if (containsBadWord(comment)) {
+                alert('Comment contains inappropriate language.');
+                return;
+            }
             const time = new Date().toLocaleTimeString();
             try {
                 const response = await fetch('/api/comments', {
@@ -135,5 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    await fetchBadWords(); // Ensure bad words are fetched before using containsBadWord
     loadPosts();
 });

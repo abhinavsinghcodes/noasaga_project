@@ -257,6 +257,7 @@ footer {
     align-items: center;
     flex-direction: column;
     gap: 3px;
+    box-sizing: border-box;
 }
 
 .posts-div {
@@ -264,6 +265,8 @@ footer {
     height: auto;
     width: 100%;
     margin-left: 0.625rem;
+    display: flex;
+    flex-direction: column-reverse;
 }
 
 .posts-div::-webkit-scrollbar {
@@ -299,7 +302,7 @@ footer {
 }
 
 .post hr {
-    margin: 2px 10px 2px 10px;
+    margin: 3px 6px;
     border: 1px solid black;
 }
 
@@ -318,4 +321,17 @@ footer {
 
 .reply-box::-webkit-scrollbar {
     display: none;
+}
+
+.footer-class2 h2 {
+    min-height: 28px;
+}
+
+#notepad {
+    max-width: 98%;
+    width: 98%;
+    max-height: 98%;
+    height: 98%;
+    padding: 0.3125rem;
+    box-sizing: border-box;
 }

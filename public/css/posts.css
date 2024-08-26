@@ -26,6 +26,7 @@ body {
     background-color: white;
 }
 
+
 .main {
     background-color: black;
     width: 638px;
@@ -76,6 +77,11 @@ nav {
     gap: 8px;
     padding: 0 5px;
     box-sizing: border-box;
+}
+
+.postsContainer {
+    display: flex;
+    flex-direction: column-reverse;
 }
 
 nav button {
@@ -210,7 +216,7 @@ h2 {
     display: none;
 }
 
-#button-reply {
+.replyform1 button {
     width: fit-content;
     margin: 2px;
     padding: 0 5px 0 5px;
@@ -219,7 +225,7 @@ h2 {
     transition: 0.2s ease-in;
 }
 
-#button-reply:hover {
+.replyform1 button:hover {
     background-color: #FF92AE;
     color: white;
     scale: 1.1;
@@ -232,6 +238,7 @@ h2 {
     margin-left: 0px;
     flex-direction: column;
     gap: 3px;
+    margin-top: 0.3125rem;
 }
 
 .replyform1 textarea {
