@@ -10,6 +10,8 @@ const axios = require('axios');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { check, validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -34,6 +36,18 @@ const commentsFilePath = path.join(__dirname, 'comments.json');
 const postsFilePath = path.join(__dirname, 'posts.json');
 const topAnimeFilePath = path.join(__dirname, 'topAnime.json');
 const badWordsFilePath = path.join(__dirname, 'bad-words.txt');
+
+const hashedPassword = process.env.ADMIN_PASSWORD_HASH;
+
+
+let lastFailedAttempt = 0; // Timestamp of the last failed attempt
+let failAttempts = 0; // Number of failed attempts
+
+// Helper function to calculate delay in milliseconds
+function getDelay() {
+    const baseDelay = 10000; // Initial delay of 10 seconds
+    return baseDelay * Math.pow(10, failAttempts); // Increase delay exponentially
+}
 
 // Load and save functions
 function loadComments() {
@@ -87,6 +101,38 @@ function loadBadWords() {
         .map(word => word.trim())
         .filter(word => word.length > 0);
 }
+
+app.post('/check-password', (req, res) => {
+    const { password } = req.body;
+    const now = Date.now();
+
+    // Check if the user is currently in the penalty period
+    if (failAttempts > 0 && now < lastFailedAttempt + getDelay()) {
+        const remainingTime = Math.ceil((lastFailedAttempt + getDelay() - now) / 1000);
+        return res.status(429).json({ message: `Too many attempts. Please wait ${remainingTime} seconds.` });
+    }
+
+    bcrypt.compare(password, hashedPassword, (err, isMatch) => {
+        if (err) {
+            console.error('Error comparing password:', err);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        if (isMatch) {
+            failAttempts = 0; // Reset failed attempts on success
+            return res.status(200).json({ message: 'Authenticated' });
+        } else {
+            lastFailedAttempt = now;
+            failAttempts += 1; // Increment failed attempts
+            return res.status(403).json({ message: 'Invalid password' });
+        }
+    });
+});
+
+// Serve admin.html
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/admin.html'));
+});
 
 // API routes
 app.get('/api/comments', (req, res) => {
@@ -212,6 +258,101 @@ app.get('/api/replies', async (req, res) => {
         res.json(replies);
     } catch (error) {
         res.status(500).send('Error reading replies');
+    }
+});
+
+// Serve admin.html
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/admin.html'));
+});
+
+// Fetch all posts
+app.get('/posts', (req, res) => {
+    fs.readFile('posts.json', (err, data) => {
+        if (err) throw err;
+        res.json(JSON.parse(data));
+    });
+});
+
+// Delete a specific post by ID
+app.delete('/posts/:id', (req, res) => {
+    const postId = req.params.id;
+
+    fs.readFile('posts.json', (err, data) => {
+        if (err) throw err;
+        let posts = JSON.parse(data);
+
+        posts = posts.filter(post => post.id !== postId);
+
+        fs.writeFile('posts.json', JSON.stringify(posts, null, 2), err => {
+            if (err) throw err;
+            res.json({ message: 'Post deleted' });
+        });
+    });
+});
+
+// Delete a specific reply by post ID and reply ID
+app.delete('/posts/:postId/replies/:replyId', (req, res) => {
+    const { postId, replyId } = req.params;
+
+    fs.readFile('posts.json', (err, data) => {
+        if (err) throw err;
+        let posts = JSON.parse(data);
+
+        const post = posts.find(p => p.id === postId);
+        if (post) {
+            post.replies = post.replies.filter(reply => reply.id !== replyId);
+
+            fs.writeFile('posts.json', JSON.stringify(posts, null, 2), err => {
+                if (err) throw err;
+                res.json({ message: 'Reply deleted' });
+            });
+        } else {
+            res.status(404).json({ message: 'Post not found' });
+        }
+    });
+});
+
+// Delete all posts
+app.delete('/posts', (req, res) => {
+    fs.writeFile('posts.json', '[]', err => {
+        if (err) throw err;
+        res.json({ message: 'All posts deleted' });
+    });
+});
+
+// Fetch all comments
+app.get('/comments', (req, res) => {
+    fs.readFile('comments.json', (err, data) => {
+        if (err) throw err;
+        res.json(JSON.parse(data));
+    });
+});
+
+// Delete a specific comment by ID
+app.delete('/comments/:id', (req, res) => {
+    const commentId = req.params.id;
+
+    fs.readFile('comments.json', (err, data) => {
+        if (err) throw err;
+        let comments = JSON.parse(data);
+
+        comments = comments.filter(comment => comment.id !== commentId);
+
+        fs.writeFile('comments.json', JSON.stringify(comments, null, 2), err => {
+            if (err) throw err;
+            res.json({ message: 'Comment deleted' });
+        });
+    });
+});
+
+// Password check route
+app.post('/check-password', (req, res) => {
+    const { password } = req.body;
+    if (bcrypt.compareSync(password, hashedPassword)) {
+        res.status(200).json({ message: 'Authenticated' });
+    } else {
+        res.status(403).json({ message: 'Invalid password' });
     }
 });
 

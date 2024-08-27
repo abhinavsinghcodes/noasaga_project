@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="login-form">
+        <h1>Admin Login</h1>
+        <input type="password" id="password" placeholder="Enter password">
+        <button id="login-button">Login</button>
+        <div id="error-message" style="color: red;"></div>
+        <div id="countdown-timer" style="color: red; margin-top: 10px;"></div>
+    </div>
+    
+    <div class="admin-panel" style="display: none;">
+        <h1>Admin Panel</h1>
+        <h2>Manage Posts</h2>
+        <div id="posts-container"></div>
+        <button id="delete-all-posts">Delete All Posts</button>
+        
+        <h2>Manage Chatroom Comments</h2>
+        <div id="comments-container"></div>
+        <button id="delete-all-comments">Delete All Comments</button>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>
