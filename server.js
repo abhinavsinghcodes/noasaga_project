@@ -129,6 +129,7 @@ app.post('/check-password', (req, res) => {
     });
 });
 
+
 // Serve admin.html
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/admin.html'));
@@ -267,8 +268,8 @@ app.get('/admin', (req, res) => {
 });
 
 // Fetch all posts
-app.get('/posts', (req, res) => {
-    fs.readFile('posts.json', (err, data) => {
+app.get('/api/postsfile', (req, res) => {
+    fs.readFile(postsFilePath, (err, data) => {
         if (err) throw err;
         res.json(JSON.parse(data));
     });
@@ -315,15 +316,15 @@ app.delete('/posts/:postId/replies/:replyId', (req, res) => {
 
 // Delete all posts
 app.delete('/posts', (req, res) => {
-    fs.writeFile('posts.json', '[]', err => {
+    fs.writeFile(postsFilePath, '[]', err => {
         if (err) throw err;
         res.json({ message: 'All posts deleted' });
     });
 });
 
 // Fetch all comments
-app.get('/comments', (req, res) => {
-    fs.readFile('comments.json', (err, data) => {
+app.get('/api/commentsfile', (req, res) => {
+    fs.readFile(commentsFilePath, (err, data) => {
         if (err) throw err;
         res.json(JSON.parse(data));
     });

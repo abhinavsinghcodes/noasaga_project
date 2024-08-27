@@ -65,7 +65,7 @@ document.getElementById('login-button').onclick = (event) => {
 };
 
 function fetchPosts() {
-    fetch('/posts')
+    fetch('/api/postsfile')
         .then(response => response.json())
         .then(posts => {
             const postsContainer = document.getElementById('posts-container');
@@ -116,7 +116,7 @@ function fetchPosts() {
 }
 
 function fetchComments() {
-    fetch('/comments')
+    fetch('/api/commentsfile')
         .then(response => response.json())
         .then(comments => {
             const commentsContainer = document.getElementById('comments-container');
