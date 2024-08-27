@@ -185,6 +185,36 @@ app.get('/api/badwords', (req, res) => {
     res.json(badWords);
 });
 
+// Fetch all posts
+app.get('/api/posts', async (req, res) => {
+    try {
+        const posts = await readJSONFile(path.join(__dirname, 'public', 'posts.json'));
+        res.json(posts);
+    } catch (error) {
+        res.status(500).send('Error reading posts');
+    }
+});
+
+// Fetch all comments
+app.get('/api/comments', async (req, res) => {
+    try {
+        const comments = await readJSONFile(path.join(__dirname, 'public', 'comments.json'));
+        res.json(comments);
+    } catch (error) {
+        res.status(500).send('Error reading comments');
+    }
+});
+
+// Fetch all replies
+app.get('/api/replies', async (req, res) => {
+    try {
+        const replies = await readJSONFile(path.join(__dirname, 'public', 'replies.json'));
+        res.json(replies);
+    } catch (error) {
+        res.status(500).send('Error reading replies');
+    }
+});
+
 // Socket.IO
 io.on('connection', (socket) => {
     console.log('A user connected');

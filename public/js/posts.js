@@ -1,7 +1,27 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const postsContainer = document.getElementById('postsContainer');
-    const searchBar = document.getElementById('search-bar'); // Updated id to match HTML
+    const searchBar = document.getElementById('search-bar');
     let allPosts = []; // To store all posts data
+    let badWords = []; // To store bad words
+
+    // Fetch bad words from the server
+    async function fetchBadWords() {
+        try {
+            const response = await fetch('/api/badwords');
+            if (response.ok) {
+                badWords = await response.json();
+            } else {
+                console.error('Failed to load bad words:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error fetching bad words:', error);
+        }
+    }
+
+    // Function to check if text contains any bad words
+    function containsBadWord(text) {
+        return badWords.some(badWord => text.toLowerCase().includes(badWord));
+    }
 
     // Fetch posts from posts.json
     function fetchPosts() {
@@ -54,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Handle reply form submission
             const replyForm = document.getElementById(`replyForm-${post.id}`);
-            replyForm.addEventListener('submit', event => {
+            replyForm.addEventListener('submit', async event => {
                 event.preventDefault();
                 const formData = new FormData(replyForm);
                 const replyData = {
@@ -62,24 +82,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     name: formData.get('replyName'),
                     content: formData.get('replyContent')
                 };
-                fetch('/api/replies', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(replyData)
-                })
-                .then(response => response.json())
-                .then(reply => {
-                    // Append new reply
-                    const repliesDiv = document.getElementById(`replies-${post.id}`);
-                    const replyElement = document.createElement('div');
-                    replyElement.classList.add('reply');
-                    replyElement.innerHTML = `
-                        <strong>${reply.name}</strong>: ${reply.content}
-                    `;
-                    repliesDiv.appendChild(replyElement);
-                    replyForm.reset(); // Reset form after submission
-                })
-                .catch(error => console.error('Error posting reply:', error));
+
+                if (containsBadWord(replyData.name) || containsBadWord(replyData.content)) {
+                    alert('Your reply contains inappropriate language.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/replies', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(replyData)
+                    });
+                    if (response.ok) {
+                        const reply = await response.json();
+                        // Append new reply
+                        const repliesDiv = document.getElementById(`replies-${post.id}`);
+                        const replyElement = document.createElement('div');
+                        replyElement.classList.add('reply');
+                        replyElement.innerHTML = `
+                            <strong>${reply.name}</strong>: ${reply.content}
+                        `;
+                        repliesDiv.appendChild(replyElement);
+                        replyForm.reset(); // Reset form after submission
+                    } else {
+                        console.error('Failed to post reply:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error posting reply:', error);
+                }
             });
 
             // Fetch and display replies
@@ -119,5 +150,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Initially fetch and display all posts
+    await fetchBadWords(); // Ensure bad words are fetched before using containsBadWord
     fetchPosts();
 });
