@@ -348,12 +348,25 @@ app.delete('/comments/:id', (req, res) => {
 });
 
 // Password check route
-app.post('/api/check-password', (req, res) => {
-    const { password } = req.body;
-    if (bcrypt.compareSync(password, hashedPassword)) {
-        res.status(200).json({ message: 'Authenticated' });
-    } else {
-        res.status(403).json({ message: 'Invalid password' });
+app.post('/api/check-password', async (req, res) => {
+    try {
+        const { password } = req.body;
+
+        // Ensure hashedPassword is correctly retrieved
+        const hashedPassword = process.env.HASHED_PASSWORD; // Example if stored in environment variable
+        
+        if (!hashedPassword) {
+            return res.status(500).json({ message: 'Server misconfiguration: hashed password not set' });
+        }
+
+        if (bcrypt.compareSync(password, hashedPassword)) {
+            return res.status(200).json({ message: 'Authenticated' });
+        } else {
+            return res.status(403).json({ message: 'Invalid password' });
+        }
+    } catch (error) {
+        console.error('Error in /api/check-password:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
 
