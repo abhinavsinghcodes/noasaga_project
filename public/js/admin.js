@@ -37,8 +37,9 @@ function handlePasswordResponse(response) {
         fetchPosts();
         fetchComments();
     } else { // Other errors
-        response.json().then(data => {
-            document.getElementById('error-message').textContent = data.message;
+        return response.text().then(text => {
+            console.error('Non-JSON response:', text); // Log the HTML response
+            document.getElementById('error-message').textContent = 'An error occurred. Please try again later.';
         });
     }
 }
@@ -51,7 +52,11 @@ function checkPassword() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password })
     })
-    .then(handlePasswordResponse);
+    .then(handlePasswordResponse)
+    .catch(error => {
+        console.error('Fetch error:', error);
+        document.getElementById('error-message').textContent = 'Failed to connect to the server. Please try again later.';
+    });
 }
 
 // Event listener for the login button
@@ -112,6 +117,10 @@ function fetchPosts() {
                 postElement.appendChild(deletePostButton);
                 postsContainer.appendChild(postElement);
             });
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            document.getElementById('error-message').textContent = 'Failed to load posts. Please try again later.';
         });
 }
 
@@ -142,6 +151,10 @@ function fetchComments() {
 
                 commentsContainer.appendChild(commentElement);
             });
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            document.getElementById('error-message').textContent = 'Failed to load comments. Please try again later.';
         });
 }
 
@@ -151,6 +164,10 @@ function deletePost(postId) {
         .then(data => {
             alert(data.message);
             fetchPosts();
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            document.getElementById('error-message').textContent = 'Failed to delete the post. Please try again later.';
         });
 }
 
@@ -160,6 +177,10 @@ function deleteReply(postId, replyId) {
         .then(data => {
             alert(data.message);
             fetchPosts();
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            document.getElementById('error-message').textContent = 'Failed to delete the reply. Please try again later.';
         });
 }
 
@@ -169,6 +190,10 @@ function deleteComment(commentId) {
         .then(data => {
             alert(data.message);
             fetchComments();
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            document.getElementById('error-message').textContent = 'Failed to delete the comment. Please try again later.';
         });
 }
 
@@ -179,6 +204,10 @@ document.getElementById('delete-all-posts').onclick = () => {
             .then(data => {
                 alert(data.message);
                 fetchPosts();
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                document.getElementById('error-message').textContent = 'Failed to delete all posts. Please try again later.';
             });
     }
 };
@@ -190,6 +219,10 @@ document.getElementById('delete-all-comments').onclick = () => {
             .then(data => {
                 alert(data.message);
                 fetchComments();
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                document.getElementById('error-message').textContent = 'Failed to delete all comments. Please try again later.';
             });
     }
 };
