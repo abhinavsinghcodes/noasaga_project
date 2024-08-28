@@ -10,8 +10,6 @@ const axios = require('axios');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { check, validationResult } = require('express-validator');
-const bcrypt = require('bcryptjs');
-require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -23,18 +21,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(helmet());
 
-// Set 'trust proxy' to true for rate limiting
-app.set('trust proxy', true);
-
 // Rate limiting
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    max: 100, // limit each IP to 100 requests per windowMs
     message: 'Too many requests from this IP, please try again later.',
-    standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
-    legacyHeaders: false,  // Disable the `X-RateLimit-*` headers
 });
-
 app.use('/api/', apiLimiter);
 
 // File paths
@@ -42,12 +34,6 @@ const commentsFilePath = path.join(__dirname, 'comments.json');
 const postsFilePath = path.join(__dirname, 'posts.json');
 const topAnimeFilePath = path.join(__dirname, 'topAnime.json');
 const badWordsFilePath = path.join(__dirname, 'bad-words.txt');
-
-// Helper function to calculate delay in milliseconds
-function getDelay() {
-    const baseDelay = 10000; // Initial delay of 10 seconds
-    return baseDelay * Math.pow(10, failAttempts); // Increase delay exponentially
-}
 
 // Load and save functions
 function loadComments() {
@@ -103,32 +89,6 @@ function loadBadWords() {
 }
 
 // API routes
-app.post('/api/check-password', (req, res) => {
-    try {
-        const { password } = req.body;
-
-        // Fetch the hashed password from environment variables or any other secure storage
-        const hashedPassword = process.env.ADMIN_PASSWORD_HASH;
-
-        if (!hashedPassword) {
-            return res.status(500).json({ message: 'Server misconfiguration: hashed password not set' });
-        }
-
-        if (bcrypt.compareSync(password, hashedPassword)) {
-            return res.status(200).json({ message: 'Authenticated' });
-        } else {
-            return res.status(403).json({ message: 'Invalid password' });
-        }
-    } catch (error) {
-        console.error('Error in /api/check-password:', error);
-        return res.status(500).json({ message: 'Internal Server Error' });
-    }
-});
-
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/admin.html'));
-});
-
 app.get('/api/comments', (req, res) => {
     res.json(loadComments());
 });
@@ -219,95 +179,85 @@ app.get('/api/anime/:animeId', async (req, res) => {
     }
 });
 
+// Serve the bad words list to the frontend
 app.get('/api/badwords', (req, res) => {
     const badWords = loadBadWords();
     res.json(badWords);
 });
 
 // Fetch all posts
-app.get('/api/postsfile', (req, res) => {
-    fs.readFile(postsFilePath, (err, data) => {
-        if (err) {
-            console.error('Error reading posts file:', err);
-            return res.status(500).send('Error reading posts file');
-        }
-        res.json(JSON.parse(data));
+app.get('/api/posts', async (req, res) => {
+    try {
+        const posts = await readJSONFile(path.join(__dirname, 'public', 'posts.json'));
+        res.json(posts);
+    } catch (error) {
+        res.status(500).send('Error reading posts');
+    }
+});
+
+// Fetch all comments
+app.get('/api/comments', async (req, res) => {
+    try {
+        const comments = await readJSONFile(path.join(__dirname, 'public', 'comments.json'));
+        res.json(comments);
+    } catch (error) {
+        res.status(500).send('Error reading comments');
+    }
+});
+
+// Fetch all replies
+app.get('/api/replies', async (req, res) => {
+    try {
+        const replies = await readJSONFile(path.join(__dirname, 'public', 'replies.json'));
+        res.json(replies);
+    } catch (error) {
+        res.status(500).send('Error reading replies');
+    }
+});
+
+// Socket.IO
+io.on('connection', (socket) => {
+    console.log('A user connected');
+    socket.emit('updateComments', loadComments());
+    socket.emit('updatePosts', loadPosts());
+
+    socket.on('refreshComments', () => {
+        socket.emit('updateComments', loadComments());
     });
-});
 
-// Delete a specific post by ID
-app.delete('/posts/:id', (req, res) => {
-    const postId = req.params.id;
-
-    fs.readFile(postsFilePath, (err, data) => {
-        if (err) {
-            console.error('Error reading posts file:', err);
-            return res.status(500).send('Error reading posts file');
-        }
-        let posts = JSON.parse(data);
-
-        posts = posts.filter(post => post.id !== postId);
-
-        fs.writeFile(postsFilePath, JSON.stringify(posts, null, 2), err => {
-            if (err) {
-                console.error('Error writing posts file:', err);
-                return res.status(500).send('Error writing posts file');
-            }
-            res.json({ message: 'Post deleted' });
-        });
+    socket.on('refreshPosts', () => {
+        socket.emit('updatePosts', loadPosts());
     });
-});
 
-// Delete a specific reply by ID
-app.delete('/posts/:postId/replies/:replyId', (req, res) => {
-    const { postId, replyId } = req.params;
-
-    fs.readFile(postsFilePath, (err, data) => {
-        if (err) {
-            console.error('Error reading posts file:', err);
-            return res.status(500).send('Error reading posts file');
-        }
-        let posts = JSON.parse(data);
-
-        const post = posts.find(p => p.id === postId);
-        if (!post) {
-            return res.status(404).json({ message: 'Post not found' });
-        }
-
-        post.replies = post.replies.filter(reply => reply.id !== replyId);
-
-        fs.writeFile(postsFilePath, JSON.stringify(posts, null, 2), err => {
-            if (err) {
-                console.error('Error writing posts file:', err);
-                return res.status(500).send('Error writing posts file');
-            }
-            res.json({ message: 'Reply deleted' });
-        });
+    socket.on('removeComment', (id) => {
+        let comments = loadComments();
+        comments = comments.filter(comment => comment.id !== id);
+        saveComments(comments);
+        io.emit('updateComments', comments);
     });
-});
 
-// Delete all posts
-app.delete('/posts', (req, res) => {
-    fs.writeFile(postsFilePath, JSON.stringify([], null, 2), err => {
-        if (err) {
-            console.error('Error deleting all posts:', err);
-            return res.status(500).send('Error deleting all posts');
-        }
-        res.json({ message: 'All posts deleted' });
+    socket.on('removeAllComments', () => {
+        saveComments([]);
+        io.emit('updateComments', []);
     });
-});
 
-// Handle 404 - Not Found
-app.use((req, res, next) => {
-    res.status(404).send('404 - Not Found');
-});
+    socket.on('removePost', (id) => {
+        let posts = loadPosts();
+        posts = posts.filter(post => post.id !== id);
+        savePosts(posts);
+        io.emit('updatePosts', posts);
+    });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('500 - Internal Server Error');
+    socket.on('removeAllPosts', () => {
+        savePosts([]);
+        io.emit('updatePosts', []);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('A user disconnected');
+    });
 });
 
 server.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+    console.log(`Server running at http://localhost:${port}`);
 });
