@@ -353,7 +353,7 @@ app.post('/api/check-password', async (req, res) => {
         const { password } = req.body;
 
         // Ensure hashedPassword is correctly retrieved
-        const hashedPassword = process.env.HASHED_PASSWORD; // Example if stored in environment variable
+        const hashedPassword = process.env.ADMIN_PASSWORD_HASH; // Example if stored in environment variable
         
         if (!hashedPassword) {
             return res.status(500).json({ message: 'Server misconfiguration: hashed password not set' });
