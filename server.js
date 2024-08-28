@@ -23,8 +23,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(helmet());
 
-// Disable 'trust proxy' to prevent rate limiter bypass
-app.set('trust proxy', false);
+// Set 'trust proxy' to true for rate limiting
+app.set('trust proxy', true);
 
 // Rate limiting
 const apiLimiter = rateLimit({
@@ -258,7 +258,7 @@ app.delete('/posts/:id', (req, res) => {
     });
 });
 
-// Delete a specific reply by post ID and reply ID
+// Delete a specific reply by ID
 app.delete('/posts/:postId/replies/:replyId', (req, res) => {
     const { postId, replyId } = req.params;
 
