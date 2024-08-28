@@ -18,19 +18,23 @@ const port = process.env.PORT || 3000;
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Rate limiter setup
-const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.',
-});
-
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(helmet());
 
-// Apply rate limiter to all API routes
+// Disable 'trust proxy' to prevent rate limiter bypass
+app.set('trust proxy', false);
+
+// Rate limiting
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
+    legacyHeaders: false,  // Disable the `X-RateLimit-*` headers
+});
+
 app.use('/api/', apiLimiter);
 
 // File paths
@@ -101,50 +105,33 @@ function loadBadWords() {
         .filter(word => word.length > 0);
 }
 
-// Rate limiting configuration
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: "Too many requests from this IP, please try again after 15 minutes"
-});
+// API routes
+app.post('/api/check-password', (req, res) => {
+    try {
+        const { password } = req.body;
 
-app.set('trust proxy', true);
+        // Fetch the hashed password from environment variables or any other secure storage
+        const hashedPassword = process.env.ADMIN_PASSWORD_HASH;
 
-
-app.post('/check-password', (req, res) => {
-    const { password } = req.body;
-    const now = Date.now();
-
-    // Check if the user is currently in the penalty period
-    if (failAttempts > 0 && now < lastFailedAttempt + getDelay()) {
-        const remainingTime = Math.ceil((lastFailedAttempt + getDelay() - now) / 1000);
-        return res.status(429).json({ message: `Too many attempts. Please wait ${remainingTime} seconds.` });
-    }
-
-    bcrypt.compare(password, hashedPassword, (err, isMatch) => {
-        if (err) {
-            console.error('Error comparing password:', err);
-            return res.status(500).json({ message: 'Internal server error' });
+        if (!hashedPassword) {
+            return res.status(500).json({ message: 'Server misconfiguration: hashed password not set' });
         }
 
-        if (isMatch) {
-            failAttempts = 0; // Reset failed attempts on success
+        if (bcrypt.compareSync(password, hashedPassword)) {
             return res.status(200).json({ message: 'Authenticated' });
         } else {
-            lastFailedAttempt = now;
-            failAttempts += 1; // Increment failed attempts
             return res.status(403).json({ message: 'Invalid password' });
         }
-    });
+    } catch (error) {
+        console.error('Error in /api/check-password:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
 });
 
-
-// Serve admin.html
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/admin.html'));
 });
 
-// API routes
 app.get('/api/comments', (req, res) => {
     res.json(loadComments());
 });
@@ -235,45 +222,9 @@ app.get('/api/anime/:animeId', async (req, res) => {
     }
 });
 
-// Serve the bad words list to the frontend
 app.get('/api/badwords', (req, res) => {
     const badWords = loadBadWords();
     res.json(badWords);
-});
-
-// Fetch all posts
-app.get('/api/posts', async (req, res) => {
-    try {
-        const posts = await readJSONFile(path.join(__dirname, 'public', 'posts.json'));
-        res.json(posts);
-    } catch (error) {
-        res.status(500).send('Error reading posts');
-    }
-});
-
-// Fetch all comments
-app.get('/api/comments', async (req, res) => {
-    try {
-        const comments = await readJSONFile(path.join(__dirname, 'public', 'comments.json'));
-        res.json(comments);
-    } catch (error) {
-        res.status(500).send('Error reading comments');
-    }
-});
-
-// Fetch all replies
-app.get('/api/replies', async (req, res) => {
-    try {
-        const replies = await readJSONFile(path.join(__dirname, 'public', 'replies.json'));
-        res.json(replies);
-    } catch (error) {
-        res.status(500).send('Error reading replies');
-    }
-});
-
-// Serve admin.html
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/admin.html'));
 });
 
 // Fetch all posts
@@ -288,13 +239,13 @@ app.get('/api/postsfile', (req, res) => {
 app.delete('/posts/:id', (req, res) => {
     const postId = req.params.id;
 
-    fs.readFile('posts.json', (err, data) => {
+    fs.readFile(postsFilePath, (err, data) => {
         if (err) throw err;
         let posts = JSON.parse(data);
 
         posts = posts.filter(post => post.id !== postId);
 
-        fs.writeFile('posts.json', JSON.stringify(posts, null, 2), err => {
+        fs.writeFile(postsFilePath, JSON.stringify(posts, null, 2), err => {
             if (err) throw err;
             res.json({ message: 'Post deleted' });
         });
@@ -305,127 +256,43 @@ app.delete('/posts/:id', (req, res) => {
 app.delete('/posts/:postId/replies/:replyId', (req, res) => {
     const { postId, replyId } = req.params;
 
-    fs.readFile('posts.json', (err, data) => {
+    fs.readFile(postsFilePath, (err, data) => {
         if (err) throw err;
         let posts = JSON.parse(data);
 
         const post = posts.find(p => p.id === postId);
-        if (post) {
-            post.replies = post.replies.filter(reply => reply.id !== replyId);
-
-            fs.writeFile('posts.json', JSON.stringify(posts, null, 2), err => {
-                if (err) throw err;
-                res.json({ message: 'Reply deleted' });
-            });
-        } else {
-            res.status(404).json({ message: 'Post not found' });
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
         }
+
+        post.replies = post.replies.filter(reply => reply.id !== replyId);
+
+        fs.writeFile(postsFilePath, JSON.stringify(posts, null, 2), err => {
+            if (err) throw err;
+            res.json({ message: 'Reply deleted' });
+        });
     });
 });
 
 // Delete all posts
 app.delete('/posts', (req, res) => {
-    fs.writeFile(postsFilePath, '[]', err => {
+    fs.writeFile(postsFilePath, JSON.stringify([], null, 2), err => {
         if (err) throw err;
         res.json({ message: 'All posts deleted' });
     });
 });
 
-// Fetch all comments
-app.get('/api/commentsfile', (req, res) => {
-    fs.readFile(commentsFilePath, (err, data) => {
-        if (err) throw err;
-        res.json(JSON.parse(data));
-    });
+// Handle 404 - Not Found
+app.use((req, res, next) => {
+    res.status(404).send('404 - Not Found');
 });
 
-// Delete a specific comment by ID
-app.delete('/comments/:id', (req, res) => {
-    const commentId = req.params.id;
-
-    fs.readFile('comments.json', (err, data) => {
-        if (err) throw err;
-        let comments = JSON.parse(data);
-
-        comments = comments.filter(comment => comment.id !== commentId);
-
-        fs.writeFile('comments.json', JSON.stringify(comments, null, 2), err => {
-            if (err) throw err;
-            res.json({ message: 'Comment deleted' });
-        });
-    });
-});
-
-app.use(limiter);
-
-app.set('trust proxy', true);
-
-// Password check route
-app.post('/api/check-password', (req, res) => {
-    try {
-        const { password } = req.body;
-
-        // Fetch the hashed password from environment variables or any other secure storage
-        const hashedPassword = process.env.ADMIN_PASSWORD_HASH;
-
-        if (!hashedPassword) {
-            return res.status(500).json({ message: 'Server misconfiguration: hashed password not set' });
-        }
-
-        if (bcrypt.compareSync(password, hashedPassword)) {
-            return res.status(200).json({ message: 'Authenticated' });
-        } else {
-            return res.status(403).json({ message: 'Invalid password' });
-        }
-    } catch (error) {
-        console.error('Error in /api/check-password:', error);
-        return res.status(500).json({ message: 'Internal Server Error' });
-    }
-});
-
-// Socket.IO
-io.on('connection', (socket) => {
-    console.log('A user connected');
-    socket.emit('updateComments', loadComments());
-    socket.emit('updatePosts', loadPosts());
-
-    socket.on('refreshComments', () => {
-        socket.emit('updateComments', loadComments());
-    });
-
-    socket.on('refreshPosts', () => {
-        socket.emit('updatePosts', loadPosts());
-    });
-
-    socket.on('removeComment', (id) => {
-        let comments = loadComments();
-        comments = comments.filter(comment => comment.id !== id);
-        saveComments(comments);
-        io.emit('updateComments', comments);
-    });
-
-    socket.on('removeAllComments', () => {
-        saveComments([]);
-        io.emit('updateComments', []);
-    });
-
-    socket.on('removePost', (id) => {
-        let posts = loadPosts();
-        posts = posts.filter(post => post.id !== id);
-        savePosts(posts);
-        io.emit('updatePosts', posts);
-    });
-
-    socket.on('removeAllPosts', () => {
-        savePosts([]);
-        io.emit('updatePosts', []);
-    });
-
-    socket.on('disconnect', () => {
-        console.log('A user disconnected');
-    });
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('500 - Internal Server Error');
 });
 
 server.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+    console.log(`Server is running on http://localhost:${port}`);
 });
