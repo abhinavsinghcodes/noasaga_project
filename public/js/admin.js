@@ -19,7 +19,7 @@ function updateCountdown() {
 // Function to handle the server's response
 function handlePasswordResponse(response) {
     if (response.status === 429) { // Too Many Requests
-        return response.json().then(data => {
+        response.json().then(data => {
             const now = Date.now();
             countdownEndTime = now + blockDuration;
             document.getElementById('error-message').textContent = data.message;
@@ -37,7 +37,7 @@ function handlePasswordResponse(response) {
         fetchPosts();
         fetchComments();
     } else { // Other errors
-        return response.text().then(text => {
+        response.text().then(text => {
             console.error('Non-JSON response:', text); // Log the HTML response
             document.getElementById('error-message').textContent = 'An error occurred. Please try again later.';
         });

@@ -29,7 +29,7 @@ app.set('trust proxy', false);
 // Rate limiting
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 100, // Limit each IP to 100 requests per windowMs
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
     legacyHeaders: false,  // Disable the `X-RateLimit-*` headers
@@ -42,9 +42,6 @@ const commentsFilePath = path.join(__dirname, 'comments.json');
 const postsFilePath = path.join(__dirname, 'posts.json');
 const topAnimeFilePath = path.join(__dirname, 'topAnime.json');
 const badWordsFilePath = path.join(__dirname, 'bad-words.txt');
-
-let lastFailedAttempt = 0; // Timestamp of the last failed attempt
-let failAttempts = 0; // Number of failed attempts
 
 // Helper function to calculate delay in milliseconds
 function getDelay() {
@@ -230,7 +227,10 @@ app.get('/api/badwords', (req, res) => {
 // Fetch all posts
 app.get('/api/postsfile', (req, res) => {
     fs.readFile(postsFilePath, (err, data) => {
-        if (err) throw err;
+        if (err) {
+            console.error('Error reading posts file:', err);
+            return res.status(500).send('Error reading posts file');
+        }
         res.json(JSON.parse(data));
     });
 });
@@ -240,13 +240,19 @@ app.delete('/posts/:id', (req, res) => {
     const postId = req.params.id;
 
     fs.readFile(postsFilePath, (err, data) => {
-        if (err) throw err;
+        if (err) {
+            console.error('Error reading posts file:', err);
+            return res.status(500).send('Error reading posts file');
+        }
         let posts = JSON.parse(data);
 
         posts = posts.filter(post => post.id !== postId);
 
         fs.writeFile(postsFilePath, JSON.stringify(posts, null, 2), err => {
-            if (err) throw err;
+            if (err) {
+                console.error('Error writing posts file:', err);
+                return res.status(500).send('Error writing posts file');
+            }
             res.json({ message: 'Post deleted' });
         });
     });
@@ -257,7 +263,10 @@ app.delete('/posts/:postId/replies/:replyId', (req, res) => {
     const { postId, replyId } = req.params;
 
     fs.readFile(postsFilePath, (err, data) => {
-        if (err) throw err;
+        if (err) {
+            console.error('Error reading posts file:', err);
+            return res.status(500).send('Error reading posts file');
+        }
         let posts = JSON.parse(data);
 
         const post = posts.find(p => p.id === postId);
@@ -268,7 +277,10 @@ app.delete('/posts/:postId/replies/:replyId', (req, res) => {
         post.replies = post.replies.filter(reply => reply.id !== replyId);
 
         fs.writeFile(postsFilePath, JSON.stringify(posts, null, 2), err => {
-            if (err) throw err;
+            if (err) {
+                console.error('Error writing posts file:', err);
+                return res.status(500).send('Error writing posts file');
+            }
             res.json({ message: 'Reply deleted' });
         });
     });
@@ -277,7 +289,10 @@ app.delete('/posts/:postId/replies/:replyId', (req, res) => {
 // Delete all posts
 app.delete('/posts', (req, res) => {
     fs.writeFile(postsFilePath, JSON.stringify([], null, 2), err => {
-        if (err) throw err;
+        if (err) {
+            console.error('Error deleting all posts:', err);
+            return res.status(500).send('Error deleting all posts');
+        }
         res.json({ message: 'All posts deleted' });
     });
 });
