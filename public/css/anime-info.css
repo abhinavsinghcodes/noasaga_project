@@ -5,6 +5,7 @@
     margin: 0;
     outline: none;
     font-family: "Patrick Hand", Roboto, sans-serif;
+    font-size: calc(10px + 0.5vw);
 }
 
 :root {
@@ -59,7 +60,7 @@ header img {
 }
 
 #header-text1 {
-    font-size: 40px;
+    font-size: calc(20px + 1vw);
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 

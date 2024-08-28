@@ -6,6 +6,7 @@
         <title>NoaSaga - Home</title>
         <link rel="stylesheet" href="css/index.css">
         <link rel="stylesheet" href="css/protect.css">
+        <link rel="stylesheet" href="css/responsive.css">
         <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
         <script src="js/index.js"></script>
 </head>
@@ -23,13 +24,13 @@
 
     <div class="main" id="main">
         <!-- HEADER -->
-        <header>
+        <header id="header-bar">
             <img src="images/img (3).jpeg" id="header-image1">
             <h1 id="header-text1">WELCOME TO NOASAGA PROJECT</h1>
             <img src="images/img (4).jpeg" id="header-image2">
         </header>
         <!-- NAVIGATION BAR -->
-        <nav>
+        <nav id="nav-bar">
             <button id="nav-button-1" onclick="window.location.href='index.html'">Home</button>
             <button id="nav-button-2" onclick="window.location.href='anime-list.html'">Anime List</button>
             <button id="nav-button-3" onclick="window.location.href='chatroom.html'">Chat Room</button>
@@ -38,7 +39,7 @@
         </nav>        
         
         <!-- WELCOME MESSAGE -->
-        <main>
+        <main id="main-container">
             <img src="images/img (5).png" id="main-img1">
             <p id="welcome-message">The translation was done using another software. Apologies for any incorrect translations.<br><br>
                 This website is designed for those who have watched our reels and want to find the name of the anime!<br><br>
@@ -48,7 +49,7 @@
                 Thank you very much for visiting!</p>
             <img src="images/img (6).png" id="main-img2">
         </main>
-        <footer>
+        <footer id="footer-box">
             <div id="part1">
                 <h2>TOP ANIME OF THE MONTH</h2>
                 <ul id="lists1">
