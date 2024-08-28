@@ -11,6 +11,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { check, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
@@ -36,9 +37,6 @@ const commentsFilePath = path.join(__dirname, 'comments.json');
 const postsFilePath = path.join(__dirname, 'posts.json');
 const topAnimeFilePath = path.join(__dirname, 'topAnime.json');
 const badWordsFilePath = path.join(__dirname, 'bad-words.txt');
-
-const hashedPassword = process.env.ADMIN_PASSWORD_HASH;
-
 
 let lastFailedAttempt = 0; // Timestamp of the last failed attempt
 let failAttempts = 0; // Number of failed attempts
@@ -101,6 +99,13 @@ function loadBadWords() {
         .map(word => word.trim())
         .filter(word => word.length > 0);
 }
+
+// Rate limiting configuration
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again after 15 minutes"
+});
 
 app.post('/check-password', (req, res) => {
     const { password } = req.body;
@@ -347,14 +352,20 @@ app.delete('/comments/:id', (req, res) => {
     });
 });
 
+app.use(limiter);
+
+app.use(express.json()); // Parse JSON bodies
+
+app.set('trust proxy', true);
+
 // Password check route
-app.post('/api/check-password', async (req, res) => {
+app.post('/api/check-password', (req, res) => {
     try {
         const { password } = req.body;
 
-        // Ensure hashedPassword is correctly retrieved
-        const hashedPassword = process.env.ADMIN_PASSWORD_HASH; // Example if stored in environment variable
-        
+        // Fetch the hashed password from environment variables or any other secure storage
+        const hashedPassword = process.env.ADMIN_PASSWORD_HASH;
+
         if (!hashedPassword) {
             return res.status(500).json({ message: 'Server misconfiguration: hashed password not set' });
         }
