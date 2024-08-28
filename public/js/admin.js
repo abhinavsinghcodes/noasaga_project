@@ -46,7 +46,7 @@ function handlePasswordResponse(response) {
 // Function to check the password
 function checkPassword() {
     const password = document.getElementById('password').value;
-    fetch('/check-password', {
+    fetch('/api/check-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password })

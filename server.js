@@ -348,7 +348,7 @@ app.delete('/comments/:id', (req, res) => {
 });
 
 // Password check route
-app.post('/check-password', (req, res) => {
+app.post('/api/check-password', (req, res) => {
     const { password } = req.body;
     if (bcrypt.compareSync(password, hashedPassword)) {
         res.status(200).json({ message: 'Authenticated' });
