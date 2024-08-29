@@ -167,7 +167,7 @@ main {
     border: 1px solid black;
     width: 100%;
     text-align: center;
-    font-size: calc(10px + 1vw);
+    font-size: calc(10px + 0.5vw);
 }
 
 .list-start {
@@ -197,7 +197,7 @@ main {
     margin: none;
     height: 100%;
     transition: 0.3s ease-in-out;
-    font-size: calc(10px + 1vw);
+    font-size: calc(10px + 0.5vw);
 }
 
 .item button:hover {
