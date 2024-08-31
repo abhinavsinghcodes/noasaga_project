@@ -40,6 +40,10 @@
         flex-direction: column;
     }
 
+    #footer-boxy {
+        flex-direction: row;
+    }
+
     #part2 {
         display: none;
     }
